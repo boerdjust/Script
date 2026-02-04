@@ -34,7 +34,7 @@ MainTab:Button({
         if char and char:FindFirstChild("HumanoidRootPart") then
             for i, stage in ipairs(stages) do
                 char:PivotTo(stage.pos)
-                task.wait(0.5)
+                task.wait(2.5)
             end
             WindUI:Notify({
                 Title = "解锁完成",
