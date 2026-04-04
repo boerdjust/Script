@@ -1,9 +1,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "band's arsenal script",
-   LoadingTitle = "Loading...",
-   LoadingSubtitle = "by: band",
+   Name = "band's arsenal script ",
+   LoadingTitle = "loading...",
+   LoadingSubtitle = "by:band",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = "AimbotStalkHub",
@@ -25,30 +25,35 @@ local Workspace = game:GetService("Workspace")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
-local aimbotEnabled = false
+-- 瞄準相關變數
 local aimbotConnection = nil
+local aimbotEnabled = false
 local ignoreTeam = true
 local smoothness = 0.12
 local fovRadius = 120
 local aimPart = "身體"
 
+-- 持續尾隨相關變數（我持續瞬移到目標後面）
 local selectedStalkPlayer = nil
-local stalkEnabled = false
 local stalkConnection = nil
+local stalkEnabled = false
 local playerList = {}
 
+-- 更新玩家列表
 local function updatePlayerList()
    playerList = {}
    for _, player in pairs(Players:GetPlayers()) do
-      if player \~= LocalPlayer then
+      if player ~= LocalPlayer then
          table.insert(playerList, player.Name)
       end
    end
 end
 updatePlayerList()
 
+-- === 上半部：自然自動瞄準功能 ===
+
 Tab:CreateToggle({
-   Name = "X",
+   Name = "啟用自然自動瞄準",
    CurrentValue = false,
    Flag = "AimbotToggle",
    Callback = function(Value)
@@ -63,10 +68,10 @@ Tab:CreateToggle({
             local centerScreen = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
             
             for _, player in pairs(Players:GetPlayers()) do
-               if player \~= LocalPlayer and player.Character then
+               if player ~= LocalPlayer and player.Character then
                   local humanoid = player.Character:FindFirstChild("Humanoid")
                   if humanoid and humanoid.Health > 0 then
-                     if not ignoreTeam or player.Team \~= LocalPlayer.Team then
+                     if not ignoreTeam or player.Team ~= LocalPlayer.Team then
                         local targetPart
                         if aimPart == "頭部" then
                            targetPart = player.Character:FindFirstChild("Head")
@@ -115,10 +120,9 @@ Tab:CreateToggle({
                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothness)
             end
          end)
-         
          Rayfield:Notify({
             Title = "自動瞄準已啟用",
-            Content = "鎖定最近可視玩家 (" .. aimPart .. ")",
+            Content = "鎖定最近無牆玩家 (" .. aimPart .. ")",
             Duration = 3,
             Image = 4483362458
          })
@@ -163,7 +167,7 @@ Tab:CreateSlider({
 })
 
 Tab:CreateSlider({
-   Name = "FOV 範圍",
+   Name = "FOV 範圍 (pixels)",
    Range = {50, 300},
    Increment = 25,
    Suffix = "px",
@@ -174,23 +178,26 @@ Tab:CreateSlider({
    end,
 })
 
+-- 分隔線
 Tab:CreateParagraph({
    Title = "────────── 尾隨功能 ──────────",
    Content = ""
 })
 
+-- === 下半部：持續尾隨功能（我持續瞬移到目標正後方 0.6 格）===
+
 Tab:CreateDropdown({
-   Name = "選擇尾隨目標",
+   Name = "選擇尾隨目標玩家",
    Options = playerList,
    CurrentOption = {"無"},
    MultipleOptions = false,
    Flag = "StalkPlayer",
    Callback = function(Option)
-      if Option[1] \~= "無" then
+      if Option[1] ~= "無" then
          selectedStalkPlayer = Players:FindFirstChild(Option[1])
          Rayfield:Notify({
             Title = "已選擇尾隨目標",
-            Content = "將持續緊貼 " .. Option[1] .. " 後面",
+            Content = "你將持續緊貼在 " .. Option[1] .. " 後面",
             Duration = 3,
             Image = 4483362458
          })
@@ -206,7 +213,7 @@ Tab:CreateButton({
       updatePlayerList()
       Tab.Flags.StalkPlayer:Refresh(playerList, true)
       Rayfield:Notify({
-         Title = "列表已刷新",
+         Title = "已刷新",
          Content = "尾隨目標列表更新完成",
          Duration = 2,
          Image = 4483362458
@@ -215,7 +222,7 @@ Tab:CreateButton({
 })
 
 Tab:CreateToggle({
-   Name = "啟用持續尾隨（緊貼目標後方）",
+   Name = "啟用持續尾隨（我緊貼目標後方）",
    CurrentValue = false,
    Flag = "StalkToggle",
    Callback = function(Value)
@@ -223,11 +230,13 @@ Tab:CreateToggle({
       
       if Value and selectedStalkPlayer then
          stalkConnection = RunService.Heartbeat:Connect(function()
-            if selectedStalkPlayer.Character 
+            if selectedStalkPlayer 
+               and selectedStalkPlayer.Character 
                and selectedStalkPlayer.Character:FindFirstChild("HumanoidRootPart")
                and LocalPlayer.Character 
                and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                
+               
+               -- 距離固定為 0.6 格（非常靠近，几乎貼背）
                local offset = CFrame.new(0, 0, 0.6)
                LocalPlayer.Character.HumanoidRootPart.CFrame = 
                   selectedStalkPlayer.Character.HumanoidRootPart.CFrame * offset
@@ -236,7 +245,7 @@ Tab:CreateToggle({
          
          Rayfield:Notify({
             Title = "尾隨已啟用",
-            Content = "已緊貼在 " .. selectedStalkPlayer.Name .. " 後方",
+            Content = "你現在緊貼在 " .. selectedStalkPlayer.Name .. " 後方（0.6 格距離）",
             Duration = 4,
             Image = 4483362458
          })
@@ -247,7 +256,7 @@ Tab:CreateToggle({
          end
          Rayfield:Notify({
             Title = "尾隨已關閉",
-            Content = "已停止尾隨",
+            Content = "停止尾隨目標",
             Duration = 3,
             Image = 4483362458
          })
@@ -255,21 +264,22 @@ Tab:CreateToggle({
    end,
 })
 
+-- 玩家進出自動刷新尾隨列表
 Players.PlayerAdded:Connect(function()
-   task.wait(1)
+   wait(1)
    updatePlayerList()
    Tab.Flags.StalkPlayer:Refresh(playerList, true)
 end)
 
 Players.PlayerRemoving:Connect(function()
-   task.wait(1)
+   wait(1)
    updatePlayerList()
    Tab.Flags.StalkPlayer:Refresh(playerList, true)
 end)
 
 Rayfield:Notify({
-   Title = "腳本載入完成",
-   Content = "版本: 1.1 | by band",
-   Duration = 8,
+   Title = "腳本載入完成！",
+   Content = "版本:1.1",
+   Duration = 12,
    Image = 4483362458
 })
